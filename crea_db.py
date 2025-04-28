@@ -15,9 +15,13 @@ cursor = conn.cursor()
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS clienti (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT NOT NULL,
+    nome TEXT NOT NULL UNIQUE,
     email TEXT,
-    telefono TEXT
+    telefono TEXT,
+    indirizzo TEXT,
+    citta TEXT,
+    provincia TEXT,
+    cap TEXT
 )
 ''')
 
@@ -27,6 +31,9 @@ CREATE TABLE IF NOT EXISTS fotocopiatrici (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     seriale TEXT UNIQUE NOT NULL,
     modello TEXT,
+    marca TEXT,
+    tipologia TEXT,
+    colore TEXT,
     cliente_id INTEGER,
     FOREIGN KEY (cliente_id) REFERENCES clienti(id)
 )

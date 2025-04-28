@@ -4,19 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PrintMaster</title>
+
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            overflow-x: hidden;
+            background-color: #e9ecef;
+        }
+        .sidebar {
+            height: 100vh;
+            width: 220px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #343a40;
+            padding-top: 60px;
+            border-right: 1px solid #dee2e6;
+        }
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            color: #fff;
+            padding: 15px 20px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        .sidebar a:hover {
+            background-color: #495057;
+            color: #ffc107;
+        }
+        .sidebar i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        /* Colore specifico per ogni icona */
+        .icon-home {
+            color: #0d6efd; /* blu */
+        }
+        .icon-clienti {
+            color: #198754; /* verde */
+        }
+        .icon-fotocopiatrici {
+            color: #fd7e14; /* arancione */
+        }
+        .icon-conteggi {
+            color: #dc3545; /* rosso */
+        }
+        /* Hover: tutte bianche */
+        .sidebar a:hover i {
+            color: #ffffff;
+        }
+        .content {
+            margin-left: 220px;
+            padding: 30px;
+            padding-top: 80px;
+            background-color: #ffffff;
+            min-height: 100vh;
+        }
+        .navbar {
+            position: fixed;
+            width: 100%;
+            background-color: #212529 !important;
+            z-index: 1000;
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">PrintMaster</a>
-        </div>
-    </nav>
 
-    <div class="container">
-        {% block content %}{% endblock %}
+<nav class="navbar navbar-dark">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">PrintMaster</span>
     </div>
+</nav>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<div class="sidebar">
+    <a href="/"><i class="bi bi-house-door-fill icon-home"></i> Home</a>
+    <a href="/clienti"><i class="bi bi-people-fill icon-clienti"></i> Clienti</a>
+    <a href="/fotocopiatrici"><i class="bi bi-printer-fill icon-fotocopiatrici"></i> Fotocopiatrici</a>
+    <a href="/conteggi"><i class="bi bi-journal-text icon-conteggi"></i> Conteggi</a>
+</div>
+
+<div class="content">
+    {% block content %}{% endblock %}
+</div>
+
+<!-- Bootstrap Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
