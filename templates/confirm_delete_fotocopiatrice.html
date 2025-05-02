@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <h2>Conferma Eliminazione Fotocopiatrice</h2>
+
+        {% if errore %}
+        <div class="alert alert-danger">{{ errore }}</div>
+        {% endif %}
+
+        <p>Per confermare l'eliminazione della fotocopiatrice, scrivi <strong>DELETE</strong> nel campo qui sotto.</p>
+
+        <form method="POST">
+            <div class="mb-3">
+                <input type="text" class="form-control" name="conferma" placeholder="Scrivi DELETE per confermare" required>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('fotocopiatrici.lista_fotocopiatrici') }}" class="btn btn-secondary">Annulla</a>
+                <button type="submit" class="btn btn-danger">Conferma Eliminazione</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

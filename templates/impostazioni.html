@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Backup Database</h2>
+
+    <div class="mb-3">
+        <form method="POST" action="{{ url_for('impostazioni.crea_backup') }}" autocomplete="off">
+            <button type="submit" class="btn btn-success" id="backupBtn">
+                <i class="bi bi-save me-1"></i> Crea Backup Manuale
+            </button>
+        </form>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="card shadow">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Data</th>
+                            <th>Nome File</th>
+                            <th>Dimensione</th>
+                            <th>Download</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in backups %}
+                        <tr>
+                            <td>{{ b.formatted_date }}</td>
+                            <td>{{ b.filename }}</td>
+                            <td>{{ b.size_mb }} MB</td>
+                            <td>
+                                <a class="btn btn-sm btn-success" href="{{ url_for('impostazioni.download_backup', filename=b.filename) }}">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">Nessun backup disponibile.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelector('form').addEventListener('submit', function () {
+    // Riabilita il pulsante dopo un invio per evitare blocchi successivi
+    setTimeout(() => {
+        document.getElementById("backupBtn").disabled = false;
+    }, 1000);
+});
+</script>
+{% endblock %}

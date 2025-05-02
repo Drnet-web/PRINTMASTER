@@ -1,10 +1,59 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row">
-    <div class="col">
-        <h2>Sezione Fotocopiatrici</h2>
-        <p>Qui potrai gestire le fotocopiatrici assegnate ai clienti.</p>
+<div class="container-fluid">
+    <h2 class="mb-4">Elenco Fotocopiatriche</h2>
+
+    <div class="mb-3">
+        <a href="{{ url_for('fotocopiatrici.add_fotocopiatrice') }}" class="btn btn-success">+ Nuova Fotocopiatrici</a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Seriale</th>
+                            <th>Modello</th>
+                            <th>Marca</th>
+                            <th>Tipologia</th>
+                            <th>Colore</th>
+                            <th>Cliente</th>
+                            <th>Forfait Nero</th>
+                            <th>Forfait Colore</th>
+                            <th>Costo Copia Nero</th>
+                            <th>Costo Copia Colore</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for macchina in fotocopiatriche %}
+                        <tr>
+                            <td>{{ macchina[1] }}</td> <!-- seriale -->
+                            <td>{{ macchina[2] }}</td> <!-- modello -->
+                            <td>{{ macchina[3] }}</td> <!-- marca -->
+                            <td>{{ macchina[4] }}</td> <!-- tipologia -->
+                            <td>{{ macchina[5] }}</td> <!-- colore -->
+                            <td>{{ macchina[6] }}</td> <!-- nome cliente -->
+                            <td>{{ macchina[7] }}</td> <!-- forfait nero -->
+                            <td>{{ macchina[8] }}</td> <!-- forfait colore -->
+                            <td>{{ macchina[9] }}</td> <!-- costo copia nero -->
+                            <td>{{ macchina[10] }}</td> <!-- costo copia colore -->
+                            <td>
+                                <a href="{{ url_for('fotocopiatrici.edit_fotocopiatrice', id=macchina[0]) }}" class="btn btn-sm btn-primary">Modifica</a>
+                                <a href="{{ url_for('fotocopiatrici.delete_fotocopiatrice', id=macchina[0]) }}" class="btn btn-sm btn-danger">Elimina</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="11" class="text-center text-muted">Nessuna fotocopiatrice registrata.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

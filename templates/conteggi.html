@@ -1,10 +1,318 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<div class="row">
-    <div class="col">
-        <h2>Sezione Conteggi Stampe</h2>
-        <p>Qui potrai caricare e visualizzare i conteggi delle stampe mensili.</p>
+<div class="container-fluid">
+  <h2 class="mb-4">Recupero Totale Stampe da Email</h2>
+
+  <!-- Flash messages - solo per errori/avvisi, non per i risultati -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        {% if category == 'warning' or category == 'danger' or category == 'success' or category == 'info' %}
+          <div class="alert alert-{{ category }}" role="alert">{{ msg }}</div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="card shadow mb-4">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Seleziona Fotocopiatrice</h5>
     </div>
+    <div class="card-body">
+      <form method="POST" class="mb-4" id="conteggiForm">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="cliente" class="form-label">Cliente</label>
+            <select id="cliente" name="cliente_id" class="form-select" onchange="clienteCambiato()">
+              <option value="">-- Seleziona Cliente --</option>
+              {% for cliente in clienti %}
+                <option value="{{ cliente[0] }}" {% if cliente_selezionato and cliente[0]|string == cliente_selezionato|string %}selected{% endif %}>{{ cliente[1] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="seriale" class="form-label">Fotocopiatrice</label>
+            <select id="seriale" name="seriale" class="form-select" required {% if not cliente_selezionato %}disabled{% endif %} onchange="fotocopiatriceCambiata()">
+              <option value="">-- {% if cliente_selezionato %}Seleziona Fotocopiatrice{% else %}Seleziona Cliente Prima{% endif %} --</option>
+              {% for fotocopiatrice in fotocopiatrici_cliente %}
+                <option value="{{ fotocopiatrice.seriale }}" {% if seriale_selezionato and fotocopiatrice.seriale == seriale_selezionato %}selected{% endif %}>
+                  {{ fotocopiatrice.display_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="text-end">
+          <button type="submit" name="action" value="recupera_email" class="btn btn-primary" id="btnRecupera" {% if not cliente_selezionato %}disabled{% endif %}>
+            <i class="bi bi-envelope"></i> Recupera Totale da Email
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="risultatiContainer" {% if not seriale_estratto %}style="display: none;"{% endif %}>
+    <div class="card shadow">
+      <div class="card-header bg-success text-white">
+        <h5 class="mb-0">Risultati Recuperati</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <table class="table table-sm">
+              <tr>
+                <th>Seriale:</th>
+                <td id="risultatoSeriale">{{ seriale_estratto }}</td>
+              </tr>
+              <tr>
+                <th>Cliente:</th>
+                <td id="risultatoCliente">
+                  {% for cliente in clienti %}
+                    {% if cliente[0]|string == cliente_selezionato|string %}
+                      {{ cliente[1] }}
+                    {% endif %}
+                  {% endfor %}
+                </td>
+              </tr>
+              <tr>
+                <th>Tipo Macchina:</th>
+                <td id="risultatoTipoMacchina">{{ "A Colori" if tipo_macchina == "Si" else "Bianco e Nero" }}</td>
+              </tr>
+              <tr>
+                <th>Data Email:</th>
+                <td id="risultatoDataEmail">{{ data_email }}</td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <table class="table table-sm">
+              {% if totale_bn is not none %}
+              <tr>
+                <th>Totale Stampe B/N:</th>
+                <td id="risultatoBN">{{ totale_bn }}</td>
+              </tr>
+              {% endif %}
+              
+              {% if totale_colore is not none %}
+              <tr>
+                <th>Totale Stampe Colore:</th>
+                <td id="risultatoColore">{{ totale_colore }}</td>
+              </tr>
+              {% endif %}
+              
+              {% if totale_generale is not none %}
+              <tr>
+                <th>Totale Generale:</th>
+                <td id="risultatoTotale">{{ totale_generale }}</td>
+              </tr>
+              {% elif totale_bn is not none and totale_colore is not none %}
+              <tr>
+                <th>Totale Generale:</th>
+                <td id="risultatoTotale">{{ totale_bn + totale_colore }}</td>
+              </tr>
+              {% endif %}
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if eccedenze %}
+    <div class="card shadow mt-4">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Calcolo Eccedenze</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Conteggi Periodo</h6>
+            <table class="table table-sm">
+              <tr>
+                <th>Stampe B/N nel periodo:</th>
+                <td>{{ eccedenze.differenza_bn }}</td>
+              </tr>
+              <tr>
+                <th>Stampe Colore nel periodo:</th>
+                <td>{{ eccedenze.differenza_colore }}</td>
+              </tr>
+              <tr>
+                <th>Forfait B/N:</th>
+                <td>{{ eccedenze.forfait_nero }}</td>
+              </tr>
+              <tr>
+                <th>Forfait Colore:</th>
+                <td>{{ eccedenze.forfait_colore }}</td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <h6>Eccedenze e Costi</h6>
+            <table class="table table-sm">
+              <tr>
+                <th>Eccedenza B/N:</th>
+                <td>{{ eccedenze.eccedenza_bn }}</td>
+              </tr>
+              <tr>
+                <th>Eccedenza Colore:</th>
+                <td>{{ eccedenze.eccedenza_colore }}</td>
+              </tr>
+              <tr>
+                <th>Costo per copia B/N:</th>
+                <td>€ {{ "%.4f"|format(eccedenze.costo_copia_nero) }}</td>
+              </tr>
+              <tr>
+                <th>Costo per copia Colore:</th>
+                <td>€ {{ "%.4f"|format(eccedenze.costo_copia_colore) }}</td>
+              </tr>
+              <tr>
+                <th>Costo Eccedenza B/N:</th>
+                <td>€ {{ "%.2f"|format(eccedenze.costo_eccedenza_bn) }}</td>
+              </tr>
+              <tr>
+                <th>Costo Eccedenza Colore:</th>
+                <td>€ {{ "%.2f"|format(eccedenze.costo_eccedenza_colore) }}</td>
+              </tr>
+              <tr class="table-primary">
+                <th>Totale da fatturare:</th>
+                <td><strong>€ {{ "%.2f"|format(eccedenze.totale_costo) }}</strong></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        {% if not eccedenze.mese_precedente_trovato %}
+        <div class="alert alert-warning mt-3">
+          <i class="bi bi-exclamation-triangle"></i> Non è stato trovato il conteggio del mese precedente. 
+          I calcoli sono basati sui totali attuali come se fosse il primo mese di utilizzo.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if pdf_path_download %}
+  <div class="card shadow mt-4">
+    <div class="card-header bg-success text-white">
+      <h5 class="mb-0">PDF Generato</h5>
+    </div>
+    <div class="card-body text-center">
+      <p>Il prospetto PDF è stato generato con successo!</p>
+      <a href="{{ url_for('conteggi.download_pdf', filename=pdf_path_download) }}" 
+         class="btn btn-primary" 
+         download>
+        <i class="bi bi-download"></i> Scarica Prospetto PDF
+      </a>
+    </div>
+  </div>
+  {% endif %}
 </div>
+
+<script>
+// Funzione per gestire il cambio cliente
+function clienteCambiato() {
+    // Resetta i risultati
+    document.getElementById('risultatiContainer').style.display = 'none';
+    
+    // Se c'è la sezione eccedenze, nascondila
+    const eccedenzeElements = document.querySelectorAll('.card.shadow.mt-4');
+    eccedenzeElements.forEach(element => {
+      if (element.querySelector('.card-header.bg-info') || element.querySelector('.card-header.bg-success')) {
+        element.style.display = 'none';
+      }
+    });
+    
+    // Resetta anche eventuali messaggi flash
+    const alertElements = document.querySelectorAll('.alert');
+    alertElements.forEach(alert => {
+      alert.remove();
+    });
+    
+    // Carica le fotocopiatrici per il nuovo cliente
+    caricaFotocopiatrici();
+}
+
+// Funzione per gestire il cambio fotocopiatrice
+function fotocopiatriceCambiata() {
+    // Resetta i risultati quando cambia la fotocopiatrice
+    document.getElementById('risultatiContainer').style.display = 'none';
+    
+    // Se c'è la sezione eccedenze o PDF, nascondila
+    const eccedenzeElements = document.querySelectorAll('.card.shadow.mt-4');
+    eccedenzeElements.forEach(element => {
+      if (element.querySelector('.card-header.bg-info') || element.querySelector('.card-header.bg-success')) {
+        element.style.display = 'none';
+      }
+    });
+    
+    // Resetta anche eventuali messaggi flash
+    const alertElements = document.querySelectorAll('.alert');
+    alertElements.forEach(alert => {
+      alert.remove();
+    });
+}
+
+// Funzione per caricare le fotocopiatrici
+function caricaFotocopiatrici() {
+    const clienteId = document.getElementById('cliente').value;
+    const selectSeriale = document.getElementById('seriale');
+    const btnRecupera = document.getElementById('btnRecupera');
+    
+    // Resetta il selettore delle fotocopiatrici
+    selectSeriale.innerHTML = '<option value="">-- Seleziona Fotocopiatrice --</option>';
+    selectSeriale.disabled = true;
+    btnRecupera.disabled = true;
+    
+    if (!clienteId) {
+      return; // Nessun cliente selezionato
+    }
+    
+    // Mostra indicatore di caricamento
+    selectSeriale.innerHTML = '<option value="">Caricamento...</option>';
+    
+    // Carica le fotocopiatrici del cliente selezionato
+    fetch(`/conteggi/get_fotocopiatrici/${clienteId}`)
+      .then(response => response.json())
+      .then(data => {
+        selectSeriale.innerHTML = '<option value="">-- Seleziona Fotocopiatrice --</option>';
+        
+        if (data.length === 0) {
+          selectSeriale.innerHTML += '<option value="" disabled>Nessuna fotocopiatrice per questo cliente</option>';
+        } else {
+          data.forEach(fotocopiatrice => {
+            const option = document.createElement('option');
+            option.value = fotocopiatrice.seriale;
+            option.textContent = fotocopiatrice.display_name;
+            selectSeriale.appendChild(option);
+          });
+          selectSeriale.disabled = false;
+        }
+      })
+      .catch(error => {
+        console.error('Errore durante il caricamento delle fotocopiatrici:', error);
+        selectSeriale.innerHTML = '<option value="">Errore di caricamento</option>';
+      });
+}
+
+// Listener per abilitare/disabilitare il pulsante di recupero
+document.getElementById('seriale').addEventListener('change', function() {
+    document.getElementById('btnRecupera').disabled = !this.value;
+});
+
+// Carica le fotocopiatrici all'avvio se c'è un cliente selezionato
+document.addEventListener('DOMContentLoaded', function() {
+    const clienteSelect = document.getElementById('cliente');
+    
+    // Se c'è un cliente selezionato, carica le fotocopiatrici ma non resettare i risultati
+    if (clienteSelect.value) {
+      // NON chiamare caricaFotocopiatrici() perché resetterebbe i risultati
+      // Le fotocopiatrici sono già state caricate lato server e sono presenti nel template
+      
+      // Abilita il pulsante se c'è anche una fotocopiatrice selezionata
+      const serialeSelect = document.getElementById('seriale');
+      if (serialeSelect.value) {
+        document.getElementById('btnRecupera').disabled = false;
+      }
+    }
+});
+</script>
 {% endblock %}
